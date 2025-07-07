@@ -11,9 +11,9 @@
 #         sudo ln -s /usr/bin/wx-config-3.0 /usr/bin/wx-config
 #
 
-project("imppg")
+cmake_minimum_required(VERSION 2.8...3.5)
 
-cmake_minimum_required(VERSION 2.8)
+project("imppg")
 
 enable_testing()
 
@@ -46,9 +46,9 @@ target_include_directories(imppg PRIVATE src)
 
 set(IMPPG_SHADERS_DIR ${CMAKE_INSTALL_FULL_DATAROOTDIR}/imppg/shaders)
 set(IMPPG_IMAGES_DIR ${CMAKE_INSTALL_FULL_DATAROOTDIR}/imppg/images)
-set(IMPPG_VERSION_MAJOR 1)
-set(IMPPG_VERSION_MINOR 9)
-set(IMPPG_VERSION_SUBMINOR 2)
+set(IMPPG_VERSION_MAJOR 2)
+set(IMPPG_VERSION_MINOR 0)
+set(IMPPG_VERSION_SUBMINOR 0)
 
 target_compile_definitions(imppg PRIVATE
     IMPPG_VERSION_MAJOR=${IMPPG_VERSION_MAJOR}
@@ -197,6 +197,7 @@ install(FILES lang/pl/imppg.mo DESTINATION ${CMAKE_INSTALL_FULL_LOCALEDIR}/pl/LC
 install(FILES lang/ru/imppg.mo DESTINATION ${CMAKE_INSTALL_FULL_LOCALEDIR}/ru/LC_MESSAGES)
 install(FILES lang/uk/imppg.mo DESTINATION ${CMAKE_INSTALL_FULL_LOCALEDIR}/uk/LC_MESSAGES)
 install(FILES lang/de/imppg.mo DESTINATION ${CMAKE_INSTALL_FULL_LOCALEDIR}/de/LC_MESSAGES)
+install(FILES lang/it/imppg.mo DESTINATION ${CMAKE_INSTALL_FULL_LOCALEDIR}/it/LC_MESSAGES)
 
 file(WRITE imppg.desktop
 "[Desktop Entry]

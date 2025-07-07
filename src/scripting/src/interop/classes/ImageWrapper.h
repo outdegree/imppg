@@ -1,12 +1,13 @@
 #pragma once
 
-#include "image/image.h"
 #include "interop/classes/method.h"
 
 #include <lua.hpp>
 #include <memory>
 #include <optional>
 #include <string>
+
+class c_Image;
 
 namespace scripting
 {
@@ -35,6 +36,10 @@ public:
                 return MethodNoResult<ImageWrapper>(lua, &ImageWrapper::auto_white_balance);
             }},
 
+            {"multiply", [](lua_State* lua) -> int {
+                return MethodDoubleArg<ImageWrapper>(lua, &ImageWrapper::multiply);
+            }},
+
             {nullptr, nullptr} // end-of-data marker
         };
 
@@ -48,6 +53,8 @@ public:
     void align_rgb();
 
     void auto_white_balance();
+
+    void multiply(double factor);
 
 private:
     std::shared_ptr<const c_Image> m_Image;

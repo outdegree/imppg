@@ -138,6 +138,27 @@
   end
   ```
 
+- `print`
+
+  Prints a message in the "Run script" dialog's console.
+
+  *Parameters:*
+  - message (string)
+
+  ----
+  *Example*
+  ```Lua
+  settings = imppg.load_settings("/path/to/settings.xml")
+  files, num_files = imppg.filesystem.list_files_sorted("/path/to/stack*.tif")
+  for index, file in ipairs(files) do
+      imppg.print(string.format("Processing file %s.", file))
+      image = imppg.load_image(file)
+      processed_image = imppg.process_image(image, settings)
+      processed_image:save(string.format("/path/to/processed/output_%02d.png", index), imppg.PNG_8)
+      imppg.progress(index / num_files)
+  end
+  ```
+
 - `align_images`
 
   Aligns an image sequence (e.g., to create a time-lapse animation).
@@ -149,12 +170,12 @@
   - subpixel alignment (Boolean)
   - output directory
   - output file name suffix (can be `nil`)
-  - progress callback (can be `nil`); a function taking a number (0 to 1) as a parameter
+  - progress callback (can be `nil`); a function taking a number (0 to 1) as a parameter; *note:* currently ignored,
+    the alignment progress is reflected directly in the progress bar
 
   ----
   *Examples*
 
-  Using `imppg.progress` directly as the progress callback:
   ```Lua
   imppg.align_images(
       imppg.filesystem.list_files_sorted("/images/frame*.png"),
@@ -163,51 +184,10 @@
       true,
       "/images/aligned",
       nil,
-      imppg.progress
+      nil
   )
   ```
 
-  Using a custom progress callback, in case the script consists of multiple stages:
-  ```Lua
-  function my_progress(value)
-      imppg.progress((stage - 1 + value) / num_stages)
-  end
-
-  num_stages = 3
-
-  stage = 1
-  imppg.align_images(
-      imppg.filesystem.list_files_sorted("/part1/frame*.png"),
-      imppg.STANDARD,
-      imppg.CROP,
-      true,
-      "/part1/aligned",
-      nil,
-      my_progress
-  )
-
-  stage = 2
-  imppg.align_images(
-      imppg.filesystem.list_files_sorted("/part2/frame*.png"),
-      imppg.STANDARD,
-      imppg.CROP,
-      true,
-      "/part2/aligned",
-      nil,
-      my_progress
-  )
-
-  stage = 3
-  imppg.align_images(
-      imppg.filesystem.list_files_sorted("/part3/frame*.png"),
-      imppg.STANDARD,
-      imppg.CROP,
-      true,
-      "/part3/aligned",
-      nil,
-      my_progress
-  )
-  ```
 
 ### Module `imppg.filesystem`
 
@@ -295,6 +275,21 @@ Methods:
   ```Lua
   image = imppg.load_image("/path/to/rgb_image.tif")
   image:awb()
+  ```
+
+- `multiply`
+  Multiplies all pixel values by given factor.
+
+  Can be useful when the raw stacks of a sequence are too bright (and sharpening them overflows the histogram), but normalization cannot be used (e.g., it introduces animation flicker).
+
+  *Parameters:*
+  - factor (non-negative)
+
+  ----
+  *Example*
+  ```Lua
+  image = imppg.load_image("/path/to/image.tif")
+  image:multiply(0.8)
   ```
 
 - `save`

@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2022 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2022-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -48,6 +48,7 @@ ScriptImageProcessor::~ScriptImageProcessor()
 
 void ScriptImageProcessor::StartProcessing(
     MessageContents request,
+    std::shared_ptr<Heartbeat> heartbeat,
     std::function<void(FunctionCallResult)> onCompletion
 )
 {
@@ -58,12 +59,19 @@ void ScriptImageProcessor::StartProcessing(
 
         [&](const contents::AlignRGB& call) { OnAlignRGB(call, onCompletion); },
 
-        [&](const contents::AlignImages& call) { OnAlignImages(call, onCompletion); },
+        [&](const contents::AlignImages& call) { OnAlignImages(call, heartbeat, onCompletion); },
 
         [](auto) { IMPPG_ABORT_MSG("invalid message passed to ScriptImageProcessor"); },
     };
 
-    std::visit(handler, request);
+    try
+    {
+        std::visit(handler, request);
+    }
+    catch(const std::exception& e)
+    {
+        onCompletion(call_result::Error{e.what()});
+    }
 }
 
 void ScriptImageProcessor::OnIdle(wxIdleEvent& event)
@@ -147,8 +155,14 @@ static double CalculateProgress(
     return static_cast<double>(stage * numImages + imgIdx) / (numStages * numImages);
 }
 
-void ScriptImageProcessor::OnAlignImages(const contents::AlignImages& call, CompletionFunc onCompletion)
+void ScriptImageProcessor::OnAlignImages(
+    const contents::AlignImages& call,
+    std::shared_ptr<Heartbeat> heartbeat,
+    CompletionFunc onCompletion
+)
 {
+    IMPPG_ASSERT(heartbeat != nullptr);
+
     if (m_AlignmentWorker)
     {
         m_AlignmentWorker->Wait();
@@ -168,8 +182,11 @@ void ScriptImageProcessor::OnAlignImages(const contents::AlignImages& call, Comp
             onCompletion = std::move(onCompletion),
             alignMode = call.alignMode,
             progressCallback = std::move(call.progressCallback),
-            numImages = call.inputFiles.size()
+            numImages = call.inputFiles.size(),
+            heartbeat
         ](wxThreadEvent& event) {
+            const auto sendHeartbeat = [heartbeat]() { heartbeat->Post(std::nullopt); };
+
             const int imgIdx = event.GetInt();
 
             switch (event.GetId())
@@ -180,6 +197,7 @@ void ScriptImageProcessor::OnAlignImages(const contents::AlignImages& call, Comp
 
             case EID_PHASECORR_IMG_TRANSLATION:
                 progressCallback(CalculateProgress(0, 2, imgIdx, numImages));
+                sendHeartbeat();
                 break;
 
             case EID_SAVED_OUTPUT_IMAGE: {
@@ -193,14 +211,17 @@ void ScriptImageProcessor::OnAlignImages(const contents::AlignImages& call, Comp
                 }();
 
                 progressCallback(CalculateProgress(stageIdx, numStages, imgIdx, numImages));
+                sendHeartbeat();
                 } break;
 
             case EID_LIMB_FOUND_DISC_RADIUS:
                 progressCallback(CalculateProgress(0, 3, imgIdx, numImages));
+                sendHeartbeat();
                 break;
 
             case EID_LIMB_STABILIZATION_PROGRESS:
                 progressCallback(CalculateProgress(1, 3, imgIdx, numImages));
+                sendHeartbeat();
                 break;
 
             case EID_COMPLETED:
@@ -321,6 +342,16 @@ void ScriptImageProcessor::OnAlignRGB(const contents::AlignRGB& call, Completion
 
     m_AlignmentWorker = std::make_unique<c_ImageAlignmentWorkerThread>(*m_AlignmentEvtHandler, std::move(alignParams));
     m_AlignmentWorker->Run();
+}
+
+void ScriptImageProcessor::AbortProcessing()
+{
+    m_Processor->AbortProcessing();
+    if (m_AlignmentWorker && m_AlignmentWorker->IsRunning())
+    {
+        m_AlignmentWorker->AbortProcessing();
+        m_AlignmentWorker->Wait();
+    }
 }
 
 }

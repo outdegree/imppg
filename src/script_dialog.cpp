@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2022 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2022-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -30,10 +30,7 @@ File description:
 #include "scripting/interop.h"
 #include "script_dialog.h"
 
-#include <chrono> //TESTING ##########
 #include <fstream>
-#include <iostream> //TESTING ###########
-#include <thread> //TESTING ###########
 #include <wx/button.h>
 #include <wx/filename.h>
 #include <wx/filepicker.h>
@@ -41,8 +38,6 @@ File description:
 #include <wx/richtext/richtextctrl.h>
 #include <wx/statline.h>
 #include <wx/stattext.h>
-
-using namespace std::chrono_literals; // TESTING ############
 
 namespace scripting
 {
@@ -269,6 +264,11 @@ void c_ScriptDialog::OnRunnerMessage(wxThreadEvent& event)
 
         [&](const contents::Error& contents) {
             m_Console->AppendText(_("Script execution error:") + " " + contents.message + ".\n");
+            m_Processor->AbortProcessing();
+        },
+
+        [&](const contents::Warning& contents) {
+            m_Console->AppendText(_("Warning:") + " " + contents.message + ".\n");
         },
 
         [&](const contents::ScriptFinished&) {
@@ -287,16 +287,24 @@ void c_ScriptDialog::OnRunnerMessage(wxThreadEvent& event)
             m_Progress->SetValue(100 * contents.fraction);
         },
 
+        [&](const contents::PrintMessage& contents) {
+            m_Console->AppendText(contents.message + "\n");
+        },
+
         [&](const auto& contents) {
-            // we need to make a copy first, because in `StartProcessing` invocation we also move from `payload`,
-            // and function argument evaluation order is unspecified
+            // We need to make copies first, because in `StartProcessing` invocation we also move from `payload`,
+            // and function argument evaluation order is unspecified.
             scripting::MessageContents contentsCopy = contents;
+            auto heartbeat = payload.GetHeartbeat();
             m_Processor->StartProcessing(
                 contentsCopy,
+                heartbeat,
                 [payload = std::move(payload)](scripting::FunctionCallResult result) mutable {
                     payload.SignalCompletion(std::move(result));
                 }
             );
+            // Some processors may rely on idle events, e.g., the OpenGL back end for driving L-R deconvolution.
+            QueueEvent(new wxIdleEvent{});
         }
     };
 

@@ -1,7 +1,7 @@
 # ImPPG (Image Post-Processor)
-Copyright (C) 2015-2024 Filip Szczerek (ga.software@yahoo.com)
+Copyright (C) 2015-2025 Filip Szczerek (ga.software@yahoo.com)
 
-wersja 1.9.2-beta (2024-07-06)
+wersja 2.0.0 (2025-01-30)
 
 *Niniejszy program ABSOLUTNIE nie jest objęty JAKĄKOLWIEK GWARANCJĄ. Jest to wolne oprogramowanie na licencji GNU GPL w wersji 3 (lub dowolnej późniejszej) i można je swobodnie rozpowszechniać pod pewnymi warunkami: zob. pełny tekst licencji w pliku LICENSE.*
 
@@ -417,9 +417,11 @@ ImPPG obsługuje wielojęzyczny interfejs użytkownika poprzez wbudowane funkcje
     $ msgfmt imppg.po -o imppg.mo
 ```
 
-- umieszczenie `imppg.mo` w podkatalogu o nazwie będącej kodem języka (np. `pl`, `fr-ca`)
+- umieszczenie `imppg.mo` w podkatalogu o nazwie będącej kodem ISO 639 języka (np. `pl`, `de`)
 
 - dopisanie języka do tablic w `c_MainWindow::SelectLanguage()` (`main_window.cpp`)
+
+- dopisanie odpowiedniej komendy `install(FILES lang...` w głównym pliku `CMakeLists.txt`
 
 Dystrybucja binarna ImPPG potrzebuje jedynie plików MO (binarnych). Oprócz pliku(ów) `imppg.mo` potrzebny jest również plik językowy wxWidgets (z napisami takimi jak standardowe pozycje menu, np. „Otwórz”, etykiety elementów kontrolnych, np. „Przeglądaj” itd.). Pliki te znajdują się w katalogu `<źródła_wxWidgets>/locale`. Pod Windows plik `<język>.mo` z wxWidgets musi być dostępny jako `<katalog_imppg>/<język>/wxstd3.mo`. W przypadku systemów operacyjnych, które przechowują pliki językowe MO w jednym miejscu (np. Linux), wystarczy posiadać instalację wxWidgets.
 
@@ -429,10 +431,20 @@ Dystrybucja binarna ImPPG potrzebuje jedynie plików MO (binarnych). Oprócz pli
 
 Tłumaczenie na jęz. rosyjski i ukraiński: Rusłan Pazenko.
 Tłumaczenie na jęz. niemiecki: Marcel Hoffmann.
+Tłumaczenie na jęz. włoski: Carlo Moisè.
 
 
 ----------------------------------------
 ## 14. Historia zmian
+
+**2.0.0** (2025-01-30)
+
+  - **Poprawki błędów**
+    - Błąd po włączeniu deringingu dla obrazu RGB w trybie OpenGL
+    - Aplikowanie tylko pierwszej unsharp mask w trybie CPU & bitmapy
+
+  - **Ulepszenia**
+    - Uaktualnione tłumaczenia niemieckie, ukraińskie i rosyjskie
 
 **1.9.2-beta** (2024-07-06)
 

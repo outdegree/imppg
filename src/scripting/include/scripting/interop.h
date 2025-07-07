@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2022 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2022-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -29,6 +29,8 @@ File description:
 #include "image/image.h"
 #include "scripting/script_exceptions.h"
 
+#include <wx/msgqueue.h>
+
 #include <filesystem>
 #include <future>
 #include <memory>
@@ -42,7 +44,8 @@ namespace contents
 {
 struct None {};
 struct ScriptFinished {};
-struct Error{ std::string message; };
+struct Error { std::string message; };
+struct Warning { std::string message; };
 struct NotifyBoolean { bool value; };
 struct NotifyImage { std::shared_ptr<const c_Image> image; };
 struct NotifyInteger { int value; };
@@ -50,6 +53,7 @@ struct NotifyNumber { double number; };
 struct NotifySettings { ProcessingSettings settings; };
 struct NotifyString { std::string s; bool ordered; };
 struct Progress { double fraction; };
+struct PrintMessage { std::string message; };
 
 struct AlignRGB
 {
@@ -88,6 +92,7 @@ using MessageContents = std::variant<
     contents::AlignImages,
     contents::AlignRGB,
     contents::Error,
+    contents::Warning,
     contents::None,
     contents::NotifyBoolean,
     contents::NotifyImage,
@@ -98,6 +103,7 @@ using MessageContents = std::variant<
     contents::ProcessImage,
     contents::ProcessImageFile,
     contents::Progress,
+    contents::PrintMessage,
     contents::ScriptFinished
 >;
 
@@ -114,9 +120,12 @@ using FunctionCallResult = std::variant<
     call_result::Error
 >;
 
+/// Notifies about function still running (by sending `std::nullopt`) or its completion.
+using Heartbeat = wxMessageQueue<std::optional<FunctionCallResult>>;
+
 /// Payload of messages sent by script runner's worker thread to parent.
 ///
-/// The default constructor and fake copying - which in fact moves - are required due to `wxThreadEvent`'s needs.
+/// Using `std::shared_ptr` for `m_Completion` is required due to `wxThreadEvent`'s needs.
 ///
 class ScriptMessagePayload
 {
@@ -125,39 +134,31 @@ public:
     : m_Contents(contents::None{})
     {}
 
-    ScriptMessagePayload(MessageContents&& contents, std::promise<FunctionCallResult>&& completion = {})
-    : m_Contents(std::move(contents)), m_Completion(std::move(completion))
+    ScriptMessagePayload(MessageContents&& contents, std::shared_ptr<Heartbeat> heartbeat = {})
+    : m_Contents(std::move(contents)), m_Heartbeat(std::move(heartbeat))
     {}
-
-    ScriptMessagePayload(const ScriptMessagePayload& other)
-    {
-        if (&other != this)
-        {
-            *this = std::move(other);
-        }
-    }
-
-    ScriptMessagePayload& operator=(const ScriptMessagePayload& other)
-    {
-        if (&other != this)
-        {
-            *this = std::move(const_cast<ScriptMessagePayload&>(other));
-        }
-        return *this;
-    }
-
-    ScriptMessagePayload(ScriptMessagePayload&& other) = default;
-    ScriptMessagePayload& operator=(ScriptMessagePayload&& other) = default;
 
     const MessageContents& GetContents() const { return m_Contents; }
 
-    void SignalCompletion(FunctionCallResult&& result) { m_Completion.set_value(std::move(result)); }
+    std::shared_ptr<Heartbeat> GetHeartbeat() const { return m_Heartbeat; }
+
+    void SignalOperationInProgress()
+    {
+        if (!m_Heartbeat) { throw std::logic_error{"no heartbeat associated with this message payload"}; }
+        m_Heartbeat->Post(std::nullopt);
+    }
+
+    void SignalCompletion(FunctionCallResult&& result)
+    {
+        if (!m_Heartbeat) { throw std::logic_error{"no heartbeat associated with this message payload"}; }
+        m_Heartbeat->Post(std::move(result));
+    }
 
 private:
     MessageContents m_Contents;
 
-    /// Empty for certain kinds of `MessageContents`; the receiver must then not call `SignalCompletion`.
-    std::promise<FunctionCallResult> m_Completion;
+    /// Unused for certain kinds of `MessageContents`.
+    std::shared_ptr<Heartbeat> m_Heartbeat;
 };
 
 }

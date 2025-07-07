@@ -1,7 +1,7 @@
 # ImPPG (Image Post-Processor)
-Copyright (C) 2015-2024 Filip Szczerek (ga.software@yahoo.com)
+Copyright (C) 2015-2025 Filip Szczerek (ga.software@yahoo.com)
 
-version 1.9.2-beta (2024-07-06)
+version 2.0.0 (2025-01-30)
 
 *This program comes with ABSOLUTELY NO WARRANTY. This is free software, licensed under GNU General Public License v3 or any later version and you are welcome to redistribute it under certain conditions. See the LICENSE file for details.*
 
@@ -424,9 +424,11 @@ $ xgettext -k_ src/*.cpp src/*.h -o imppg.po
 $ msgfmt imppg.po -o imppg.mo
 ```
 
-- placing `imppg.mo` in a subdirectory with name equal to the language code (e.g. `pl`, `fr-ca`)
+- placing `imppg.mo` in a subdirectory with name equal to the ISO 639 language code (e.g., `pl`, `de`)
 
 - adding the language to the arrays inside `c_MainWindow::SelectLanguage()` (`main_window.cpp`)
+
+- adding a `install(FILES lang...` entry in the top-level `CMakeLists.txt`
 
 Binary distribution of ImPPG needs only the MO (binary) language files. Beside the `imppg.mo` file(s), also the wxWidgets translation is needed (for strings like standard menu items, e.g. “Open”; control captions, e.g. “Browse” etc.). Those can be found in `<wxWidgets_source_root>/locale`. On Windows, the wxWidgets file `<language>.mo` has to be available as `<imppg_root_folder>/<language>/wxstd3.mo`. On operating systems with a common location for all `.mo` files (e.g., Linux), it is sufficient to have a wxWidgets installation.
 
@@ -436,10 +438,20 @@ Binary distribution of ImPPG needs only the MO (binary) language files. Beside t
 
 Russian and Ukrainian translations: Rusłan Pazenko.
 German translation: Marcel Hoffmann.
+Italian translation: Carlo Moisè.
 
 
 ----------------------------------------
 ## 14. Change log
+
+**2.0.0** (2025-01-30)
+
+  - **Bug fixes**
+    - Crash when deringing RGB image in OpenGL mode
+    - Only first unsharp mask applied in CPU & bitmaps mode
+
+  - **Enhancements**
+    - Updated German, Ukrainian and Russian translations
 
 **1.9.2-beta** (2024-07-06)
 
