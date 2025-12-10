@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2016-2019 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2016-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -30,6 +30,7 @@ File description:
 #include <string>
 #include <vector>
 #include <wx/stream.h>
+#include <wx/string.h>
 
 namespace Default
 {
@@ -118,10 +119,10 @@ void SerializeSettings(const ProcessingSettings& settings, wxOutputStream& strea
 std::optional<ProcessingSettings> DeserializeSettings(wxInputStream& stream);
 
 /// Saves the settings of Lucy-Richardson deconvolution, unsharp masking, tone curve and deringing; returns 'false' on error.
-bool SaveSettings(const std::string& filePath, const ProcessingSettings& settings);
+bool SaveSettings(const wxString& filePath, const ProcessingSettings& settings);
 
 /// Loads the settings of Lucy-Richardson deconvolution, unsharp masking, tone curve and deringing; returns 'false' on error.
-std::optional<ProcessingSettings> LoadSettings(const std::string& filePath);
+std::optional<ProcessingSettings> LoadSettings(const wxString& filePath);
 
 /// Returns the coefficients a, b, c, d of the cubic curve defining the "amount" value
 /// for adaptive unsharp masking. The amount is a function of local brightness

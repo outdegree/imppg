@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2016-2019 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2016-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -281,7 +281,7 @@ bool DetermineTranslationVectors(
         Log::Print(wxString::Format("Loading %s... ", fnames[idx]));
         std::string localErrorMsg;
         const auto loadResult = LoadImageFileAsMono32f(
-            fnames[idx].ToStdString(),
+            ToFsPath(fnames[idx]),
             normalizeFitsValues,
             &localErrorMsg
         );

@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2016-2021 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2016-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -178,7 +178,7 @@ bool c_BatchDialog::SaveOutputFile()
     }
 
     wxString destPath = wxFileName(m_Settings.outputDir, fn.GetName() + "_out", fn.GetExt()).GetFullPath();
-    if (!m_Processor->GetProcessedOutput().SaveToFile(destPath.ToStdString(), m_Settings.outputFmt))
+    if (!m_Processor->GetProcessedOutput().SaveToFile(ToFsPath(destPath), m_Settings.outputFmt))
     {
         wxMessageBox(wxString::Format(_("Could not save output file: %s"), destPath), _("Error"), wxICON_ERROR, this);
         m_FileOperationFailure = true;
@@ -237,7 +237,7 @@ void c_BatchDialog::ProcessNextFile()
     std::string errorMsg;
 
     auto img = LoadImageFileAs32f(
-        path.GetFullPath().ToStdString(),
+        ToFsPath(path.GetFullPath()),
         Configuration::NormalizeFITSValues,
         &errorMsg
     );
@@ -292,7 +292,7 @@ c_BatchDialog::c_BatchDialog(wxWindow* parent, wxArrayString fileNames,
 
     m_FileNames = std::move(fileNames);
 
-    const auto settings = LoadSettings(settingsFileName.ToStdString());
+    const auto settings = LoadSettings(settingsFileName);
     if (!settings.has_value())
     {
         wxMessageBox(_("Could not load processing settings."), _("Error"), wxICON_ERROR, parent);

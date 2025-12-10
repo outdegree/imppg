@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2016-2019 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2016-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -116,7 +116,7 @@ void NegateGrayscale16(IImageBuffer& buf)
     }
 }
 
-std::optional<std::tuple<unsigned, unsigned>> GetTiffDimensions(const std::string& fileName)
+std::optional<std::tuple<unsigned, unsigned>> GetTiffDimensions(const std::filesystem::path& fileName)
 {
     std::ifstream file(fileName, std::ios_base::binary);
 
@@ -193,7 +193,7 @@ std::optional<std::tuple<unsigned, unsigned>> GetTiffDimensions(const std::strin
 }
 
 /// Saves image in TIFF format; returns 'false' on error
-bool SaveTiff(const std::string& fileName, const IImageBuffer& img)
+bool SaveTiff(const std::filesystem::path& fileName, const IImageBuffer& img)
 {
     IMPPG_ASSERT(img.GetPixelFormat() == PixelFormat::PIX_MONO8 ||
                  img.GetPixelFormat() == PixelFormat::PIX_MONO16 ||
@@ -341,7 +341,7 @@ bool SaveTiff(const std::string& fileName, const IImageBuffer& img)
 
 /// Reads a TIFF image; returns 0 on error
 std::optional<c_Image> ReadTiff(
-    const std::string& fileName,
+    const std::filesystem::path& fileName,
     std::string* errorMsg ///< If not null, receives error message (if any))
 )
 {

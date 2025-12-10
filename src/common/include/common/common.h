@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2016-2024 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2016-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -212,11 +212,17 @@ Histogram DetermineHistogram(const c_Image& img, const wxRect& selection);
 
 Histogram DetermineHistogramFromChannels(const std::vector<c_Image>& channels, const wxRect& selection);
 
-inline wxString FromDir(const wxFileName& dir, wxString fname)
+wxString GetBackEndText(BackEnd backEnd);
+
+inline std::filesystem::path ToFsPath(const wxString& wxs)
 {
-    return wxFileName(dir.GetFullPath(), fname).GetFullPath();
+    using fspath = std::filesystem::path;
+    return fspath{static_cast<const fspath::value_type*>(wxs.fn_str())};
 }
 
-wxString GetBackEndText(BackEnd backEnd);
+inline std::filesystem::path FromDir(const wxFileName& dir, wxString fname)
+{
+    return ToFsPath(wxFileName(dir.GetFullPath(), fname).GetFullPath());
+}
 
 #endif //  IMPGG_COMMON_HEADER

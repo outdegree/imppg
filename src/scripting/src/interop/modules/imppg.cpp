@@ -23,8 +23,6 @@ File description:
 
 #include "alignment/align_proc.h"
 #include "common/formats.h"
-#include "interop/classes/DummyObject1.h"
-#include "interop/classes/DummyObject2.h"
 #include "interop/classes/ImageWrapper.h"
 #include "interop/classes/SettingsWrapper.h"
 #include "interop/modules/common.h"
@@ -40,17 +38,6 @@ namespace scripting::modules::imppg
 {
 
 const luaL_Reg functions[] = {
-    {"create_dummy1", [](lua_State* lua) -> int {
-        /*DummyObject1* object =*/ new(PrepareObject<DummyObject1>(lua)) DummyObject1();
-        return 1;
-    }},
-
-    {"create_dummy2", [](lua_State* lua) -> int {
-        int i = luaL_checkinteger(lua, 1);
-        new(PrepareObject<DummyObject2>(lua)) DummyObject2(i);
-        return 1;
-    }},
-
     {"new_settings", [](lua_State* lua) -> int {
         if (scripting::g_State->CheckStopRequested(lua)) { return 0; }
 
@@ -63,8 +50,12 @@ const luaL_Reg functions[] = {
         if (scripting::g_State->CheckStopRequested(lua)) { return 0; }
 
         CheckNumArgs(lua, "load_settings", 1);
-        const std::string path = GetString(lua, 1);
-        new(PrepareObject<SettingsWrapper>(lua)) SettingsWrapper(path);
+        const wxString path = GetString(lua, 1);
+
+        auto object = SettingsWrapper::FromPath(ToFsPath(path));
+
+        new(PrepareObject<SettingsWrapper>(lua)) SettingsWrapper(std::move(object));
+
         return 1;
     }},
 
@@ -72,8 +63,9 @@ const luaL_Reg functions[] = {
         if (scripting::g_State->CheckStopRequested(lua)) { return 0; }
 
         CheckNumArgs(lua, "load_image", 1);
-        const std::string imagePath = GetString(lua, 1);
-        new(PrepareObject<ImageWrapper>(lua)) ImageWrapper(imagePath);
+        const wxString imagePath = GetString(lua, 1);
+        auto object = ImageWrapper::FromPath(ToFsPath(imagePath));
+        new(PrepareObject<ImageWrapper>(lua)) ImageWrapper(std::move(object));
         return 1;
     }},
 
@@ -83,9 +75,9 @@ const luaL_Reg functions[] = {
 
         CheckNumArgs(lua, "load_image_split_rgb", 1);
 
-        const std::string imagePath = GetString(lua, 1);
+        const wxString imagePath = GetString(lua, 1);
         std::string internalErrorMsg;
-        const auto image = LoadImage(imagePath, std::nullopt, &internalErrorMsg);
+        const auto image = LoadImage(ToFsPath(imagePath), std::nullopt, &internalErrorMsg);
         if (!image.has_value())
         {
             auto message = std::string{"failed to load image from "} + imagePath;
@@ -115,9 +107,9 @@ const luaL_Reg functions[] = {
         if (scripting::g_State->CheckStopRequested(lua)) { return 0; }
 
         CheckNumArgs(lua, "process_image_file", 4);
-        const std::string imagePath = GetString(lua, 1);
-        const std::string settingsPath = GetString(lua, 2);
-        const std::string outputImagePath = GetString(lua, 3);
+        const auto imagePath = ToFsPath(GetString(lua, 1));
+        const auto settingsPath = ToFsPath(GetString(lua, 2));
+        const auto outputImagePath = ToFsPath(GetString(lua, 3));
         const int ofVal = GetInteger(lua, 4);
 
         if (ofVal < 0 || ofVal >= static_cast<int>(OutputFormat::LAST))
@@ -125,8 +117,12 @@ const luaL_Reg functions[] = {
             throw ScriptExecutionError{"invalid output format"};
         }
 
-        scripting::g_State->CallFunctionAndAwaitCompletion(scripting::contents::ProcessImageFile{imagePath, settingsPath,
-            outputImagePath, static_cast<OutputFormat>(ofVal)});
+        scripting::g_State->CallFunctionAndAwaitCompletion(scripting::contents::ProcessImageFile{
+            imagePath,
+            settingsPath,
+            outputImagePath,
+            static_cast<OutputFormat>(ofVal)
+        });
 
         return 0; //TODO: return processing result
     }},
@@ -200,7 +196,7 @@ const luaL_Reg functions[] = {
         std::vector<fs::path> inputFiles;
         for (const auto& s: GetStringTable(lua, 1))
         {
-            inputFiles.push_back(s);
+            inputFiles.push_back(ToFsPath(s));
         }
 
         const AlignmentMethod alignMode = [&]() {
@@ -223,7 +219,7 @@ const luaL_Reg functions[] = {
 
         const bool subpixelAlignment = GetBoolean(lua, 4);
 
-        const fs::path outputDir = GetString(lua, 5);
+        const fs::path outputDir = ToFsPath(GetString(lua, 5));
 
         CheckType(lua, 6, LUA_TSTRING, true);
         const auto outputFNameSuffix = lua_isnil(lua, 6)
@@ -262,7 +258,7 @@ const luaL_Reg functions[] = {
         if (scripting::g_State->CheckStopRequested(lua)) { return 0; }
 
         CheckNumArgs(lua, "print", 1);
-        std::string message = GetString(lua, 1);
+        wxString message = GetString(lua, 1);
         scripting::g_State->Sender().lock()->SendMessage(scripting::contents::PrintMessage{std::move(message)});
         return 0;
     }},

@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2016-2019 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2016-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -24,14 +24,15 @@ File description:
 #ifndef ImPPG_BMP_H
 #define ImPPG_BMP_H
 
+#include <filesystem>
 #include <optional>
 
-std::optional<c_Image> ReadBmp(const std::string& fileName);
+std::optional<c_Image> ReadBmp(const std::filesystem::path& fileName);
 
 /// Returns `false` on error.
-bool SaveBmp(const std::string& fileName, const IImageBuffer& img);
+bool SaveBmp(const std::filesystem::path& fileName, const IImageBuffer& img);
 
 /// Returns (width, height).
-std::optional<std::tuple<unsigned, unsigned>> GetBmpDimensions(const std::string& fileName);
+std::optional<std::tuple<unsigned, unsigned>> GetBmpDimensions(const std::filesystem::path& fileName);
 
 #endif // ImPPG_BMP_H

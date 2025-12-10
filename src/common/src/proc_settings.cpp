@@ -1,6 +1,6 @@
 /*
 ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
-Copyright (C) 2016-2019 Filip Szczerek <ga.software@yahoo.com>
+Copyright (C) 2016-2025 Filip Szczerek <ga.software@yahoo.com>
 
 This file is part of ImPPG.
 
@@ -334,14 +334,14 @@ bool ParseToneCurveSettings(const wxXmlNode* node, c_ToneCurve& tcurve)
 
 } // end of private definitions
 
-bool SaveSettings(const std::string& filePath, const ProcessingSettings& settings)
+bool SaveSettings(const wxString& filePath, const ProcessingSettings& settings)
 {
     wxFileOutputStream file{filePath};
     SerializeSettings(settings, file);
     return file.IsOk();
 }
 
-std::optional<ProcessingSettings> LoadSettings(const std::string& filePath)
+std::optional<ProcessingSettings> LoadSettings(const wxString& filePath)
 {
     wxFileInputStream stream{filePath};
     return DeserializeSettings(stream);

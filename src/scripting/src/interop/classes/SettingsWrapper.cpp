@@ -1,3 +1,26 @@
+/*
+ImPPG (Image Post-Processor) - common operations for astronomical stacks and other images
+Copyright (C) 2023-2025 Filip Szczerek <ga.software@yahoo.com>
+
+This file is part of ImPPG.
+
+ImPPG is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ImPPG is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ImPPG.  If not, see <http://www.gnu.org/licenses/>.
+
+File description:
+    Settings wrapper implementation.
+*/
+
 #include "interop/classes/SettingsWrapper.h"
 #include "scripting/script_exceptions.h"
 
@@ -15,12 +38,17 @@ std::string blc(const T& t) { return boost::lexical_cast<std::string>(t); }
 
 }
 
-SettingsWrapper::SettingsWrapper(const std::string& path)
+SettingsWrapper SettingsWrapper::FromPath(const std::filesystem::path& path)
 {
-    const auto settings = LoadSettings(path);
+    return SettingsWrapper(path);
+}
+
+SettingsWrapper::SettingsWrapper(const std::filesystem::path& path)
+{
+    const auto settings = LoadSettings(path.native());
     if (!settings.has_value())
     {
-        throw ScriptExecutionError(wxString::Format("failed to load settings from %s", path).ToStdString());
+        throw ScriptExecutionError(wxString::Format("failed to load settings from %s", path.generic_string()).ToStdString());
     }
     m_Settings = *settings;
 }
